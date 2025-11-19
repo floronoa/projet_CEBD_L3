@@ -1,4 +1,4 @@
-CREATE TABLE V0_LesSportifsEQ
+CREATE TABLE LesSportifs
 (
   numSp NUMBER(4),
   nomSp VARCHAR2(20),
@@ -12,7 +12,7 @@ CREATE TABLE V0_LesSportifsEQ
   CONSTRAINT SP_CK3 CHECK(numEq > 0)
 );
 
-CREATE TABLE V0_LesEpreuves
+CREATE TABLE LesEpreuves
 (
   numEp NUMBER(3),
   nomEp VARCHAR2(20),
@@ -27,3 +27,20 @@ CREATE TABLE V0_LesEpreuves
   CONSTRAINT EP_CK3 CHECK (numEp > 0),
   CONSTRAINT EP_CK4 CHECK (nbSportifsEp > 0)
 );
+
+
+CREATE TABLE Participe
+(
+  numSp NUMBER(4),
+  numEp NUMBER(3),
+  CONSTRAINT Pa_PK PRIMARY KEY (numSp,NumEp),
+  CONSTRAINT PA_FK_Sp FOREIGN KEY LesSportifs(numSp),
+  CONSTRAINT PA_FK_Ep FOREIGN KEY LesEpreuves(numEp)
+);
+
+  CREATE TABLE Enroler
+(
+  
+);
+
+

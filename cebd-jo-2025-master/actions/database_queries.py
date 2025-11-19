@@ -6,7 +6,7 @@ def liste_epreuves(data, discipline):
         result = cursor.execute(
             """
                 SELECT DISTINCT nomEp, formeEp
-                FROM V0_LesEpreuves
+                FROM LesEpreuves
                 WHERE nomDi = ?
                 ORDER BY nomEp
             """,

@@ -1,17 +1,21 @@
-import sqlite3, pandas
+import sqlite3
+import pandas
 from sqlite3 import IntegrityError
 
 # Fonction permettant de lire le fichier Excel des JO et d'insérer les données dans la base
-def read_excel_file_V0(data:sqlite3.Connection, file):
+
+
+def read_excel_file_V0(data: sqlite3.Connection, file):
     # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
     # pour construire uniformement la requête
-    df_sportifs = pandas.read_excel(file, sheet_name='LesSportifsEQ', dtype=str)
+    df_sportifs = pandas.read_excel(
+        file, sheet_name='LesSportifsEQ', dtype=str)
     df_sportifs = df_sportifs.where(pandas.notnull(df_sportifs), 'null')
 
     cursor = data.cursor()
     for ix, row in df_sportifs.iterrows():
         try:
-            query = "insert into V0_LesSportifsEQ values ({},'{}','{}','{}','{}','{}',{})".format(
+            query = "insert into LesSportifs values ({},'{}','{}','{}','{}','{}',{})".format(
                 row['numSp'], row['nomSp'], row['prenomSp'], row['pays'], row['categorieSp'], row['dateNaisSp'], row['numEq'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             print(query)
@@ -27,7 +31,7 @@ def read_excel_file_V0(data:sqlite3.Connection, file):
     cursor = data.cursor()
     for ix, row in df_epreuves.iterrows():
         try:
-            query = "insert into V0_LesEpreuves values ({},'{}','{}','{}','{}',{},".format(
+            query = "insert into LesEpreuves values ({},'{}','{}','{}','{}',{},".format(
                 row['numEp'], row['nomEp'], row['formeEp'], row['nomDi'], row['categorieEp'], row['nbSportifsEp'])
 
             if row['dateEp'] != 'null':
