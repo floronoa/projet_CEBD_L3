@@ -1,17 +1,17 @@
 
-CREATE TABLE Discipline IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Discipline 
 (
   nomDi VARCHAR2(25),
   CONSTRAINT Di_PK PRIMARY KEY (nomDi)
 );
 
-CREATE TABLE Pays IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Pays 
 (
   pays VARCHAR2(20),
   CONSTRAINT Pa_PK PRIMARY KEY (pays)
 );
 
-CREATE TABLE LesSportifs IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS LesSportifs 
 (
   numSp NUMBER(4),
   nomSp VARCHAR2(20),
@@ -20,14 +20,14 @@ CREATE TABLE LesSportifs IF NOT EXISTS
   categorieSp VARCHAR2(10),
   dateNaisSp DATE,
   CONSTRAINT SP_PK PRIMARY KEY (numSp),
-  CONSTRAINT SP_FK_pa FOREIGN KEY Pays(pays),
+  CONSTRAINT SP_FK_pa FOREIGN KEY (pays) REFERENCES Pays(pays),
   CONSTRAINT SP_CK1 CHECK(numSp > 999),
-  CONSTRAINT SP_CK2 CHECK(numSp > 1001),
+  CONSTRAINT SP_CK2 CHECK(numSp < 1501),
   CONSTRAINT SP_CK3 CHECK(categorieSp IN ('feminin','masculin'))
   
 );
 
-CREATE TABLE LesEpreuves IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS LesEpreuves 
 (
   numEp NUMBER(3),
   nomEp VARCHAR2(20),
@@ -37,7 +37,7 @@ CREATE TABLE LesEpreuves IF NOT EXISTS
   nbSportifsEp NUMBER(2),
   dateEp DATE,
   CONSTRAINT EP_PK PRIMARY KEY (numEp),
-  CONSTRAINT EP_FK_nd FOREIGN KEY Discipline(nomDi),
+  CONSTRAINT EP_FK_nd FOREIGN KEY (nomDi) REFERENCES Discipline(nomDi),
   CONSTRAINT EP_CK1 CHECK (formeEp IN ('individuelle','par equipe','par couple')),
   CONSTRAINT EP_CK2 CHECK (categorieEp IN ('feminin','masculin','mixte')),
   CONSTRAINT EP_CK3 CHECK (numEp > 0),
@@ -45,41 +45,47 @@ CREATE TABLE LesEpreuves IF NOT EXISTS
 );
 
 
-CREATE TABLE Participe IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Participe 
 (
   numSp NUMBER(4),
   numEp NUMBER(3),
-  CONSTRAINT Pa_PK PRIMARY KEY (numSp,NumEp),
-  CONSTRAINT PA_FK_Sp FOREIGN KEY LesSportifs(numSp),
-  CONSTRAINT PA_FK_Ep FOREIGN KEY LesEpreuves(numEp)
+  CONSTRAINT Pa_PK PRIMARY KEY (numSp,numEp),
+  CONSTRAINT PA_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp),
+  CONSTRAINT PA_FK_Ep FOREIGN KEY (numEp) REFERENCES LesEpreuves(numEp)
 );
 
-CREATE TABLE Equipe IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Equipe 
 (
   numEq NUMBER(4),
-  CONSTRAINT Eq_PK PRIMARY KEY (NumEq),
+  CONSTRAINT Eq_PK PRIMARY KEY (numEq),
   CONSTRAINT Eq_CK1 CHECK (numEq > 0),
   CONSTRAINT Eq_CK2 CHECK (numEq < 101)
 );
 
-CREATE TABLE Enroler IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Enroler 
 ( 
   numSp NUMBER(4),
-  numEp NUMBER(4),
-  CONSTRAINT En_PK PRIMARY KEY (numSp,NumEp),
-  CONSTRAINT En_FK_Sp FOREIGN KEY LesSportifs(numSp),
-  CONSTRAINT En_FK_Eq FOREIGN KEY Equipe(numEq)
+  numEq NUMBER(4),
+  CONSTRAINT En_PK PRIMARY KEY (numSp,numEq),
+  CONSTRAINT En_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp),
+  CONSTRAINT En_FK_Eq FOREIGN KEY (numEq) REFERENCES Equipe(numEq)
 );
 
 
-CREATE TABLE Resultat IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Resultat 
 (
   numEp NUMBER(4),
-  numOr NUMBER(4),
-  numArgent NUMBER(4),
-  numBronze NUMBER(4),
-  CONSTRAINT Re_PK PRIMARY KEY (NumEp),
-  CONSTRAINT Re_FK_Or FOREIGN KEY LesSportifs(numSp),
-  CONSTRAINT Re_FK_Ar FOREIGN KEY LesSportifs(numSp),
-  CONSTRAINT Re_FK_Br FOREIGN KEY LesSportifs(numSp)
+  numOrSp NUMBER(4),
+  numArgentSp NUMBER(4),
+  numBronzeSp NUMBER(4),
+  numOrEq NUMBER(3),
+  numArgentEq NUMBER(3),
+  numBronzeEq NUMBER(3),
+  CONSTRAINT Re_PK PRIMARY KEY (numEp),
+  CONSTRAINT Re_FK_OrSp FOREIGN KEY (numOrSp) REFERENCES LesSportifs(numSp),
+  CONSTRAINT Re_FK_ArSp FOREIGN KEY (numArgentSp) REFERENCES LesSportifs(numSp),
+  CONSTRAINT Re_FK_BrSp FOREIGN KEY (numBronzeSp) REFERENCES LesSportifs(numSp),
+  CONSTRAINT Re_FK_OrEq FOREIGN KEY (numOrEq) REFERENCES Equipe(numEq),
+  CONSTRAINT Re_FK_ArEq FOREIGN KEY (numArgentEq) REFERENCES Equipe(numEq),
+  CONSTRAINT Re_FK_BrEq FOREIGN KEY (numBronzeEq) REFERENCES Equipe(numEq)
 );
