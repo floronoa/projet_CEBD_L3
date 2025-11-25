@@ -87,3 +87,47 @@ CREATE TABLE IF NOT EXISTS Resultat
   CONSTRAINT Re_FK_ArEq FOREIGN KEY (numArgentEq) REFERENCES Equipe(numEq),
   CONSTRAINT Re_FK_BrEq FOREIGN KEY (numBronzeEq) REFERENCES Equipe(numEq)
 );
+
+
+
+/*
+
+Cr´eer une vue LesAgesSportifs (numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ageSp)
+
+
+SELECT numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ... as ageSp
+FROM LesSportifs
+
+
+*/
+
+
+
+
+
+/*
+
+Cr´eer une vue LesNbsEquipiers(numEq, nbEquipiersEq)
+
+SELECT numEq, COUNT(numSp)
+FROM LesSportifs
+GROUP BY numEq, numSp
+
+
+*/
+
+
+
+/*
+
+Cr´eer une vue calculant l’ˆage moyen des ´equipes qui ont gagn´e une m´edaille d’or
+
+WITH Age AS (SELECT 
+
+)
+SELECT numOrEq, MOY(age)
+FROM Resultat R
+JOIN LesSportifs S ON (R.numOrEq = S.numEq)
+
+
+*/
