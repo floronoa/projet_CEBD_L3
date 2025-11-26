@@ -1,3 +1,5 @@
+PRAGMA foreign_keys = ON ;
+
 
 CREATE TABLE IF NOT EXISTS Discipline 
 (
@@ -92,14 +94,30 @@ CREATE TABLE IF NOT EXISTS Resultat
 
 /*
 
-Cr´eer une vue LesAgesSportifs (numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ageSp)
-
-
-SELECT numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ... as ageSp
-FROM LesSportifs
-
+Créer une vue LesAgesSportifs (numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ageSp)
 
 */
+
+
+CREATE VIEW IF NOT EXISTS LesAgesSportifs AS
+SELECT numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ((strftime('%Y', 'now') - strftime('%Y', dateNaisSp)) - (strftime('%m-%d', 'now') < strftime('%m-%d', dateNaisSp))) AS ageSp
+FROM LesSportifs ;
+
+
+
+
+
+/*
+ Créer une vue LesNbsEquipiers(numEq, nbEquipiersEq)
+
+*/
+
+
+CREATE VIEW IF NOT EXISTS LesNbsEquipiers AS
+SELECT numEq, COUNT(numSp) AS nbEquipiersEq
+FROM LesSportifs
+JOIN Enroler USING(numSp)
+GROUP BY numEq;
 
 
 
@@ -107,27 +125,78 @@ FROM LesSportifs
 
 /*
 
-Cr´eer une vue LesNbsEquipiers(numEq, nbEquipiersEq)
-
-SELECT numEq, COUNT(numSp)
-FROM LesSportifs
-GROUP BY numEq, numSp
-
+Créer une vue calculant l’age moyen des équipes qui ont gagné une médaille d’or
 
 */
 
+CREATE VIEW IF NOT EXISTS AgeMoyEqOr AS
+SELECT numOrEq, AVG(((strftime('%Y', 'now') - strftime('%Y', dateNaisSp)) - (strftime('%m-%d', 'now') < strftime('%m-%d', dateNaisSp)))) AS moyAge
+FROM Resultat 
+JOIN Enroler ON (numEq = numOrEq)
+JOIN LesSportifs  USING (numSp)
+GROUP BY numOrEq;
 
 
 /*
 
-Cr´eer une vue calculant l’ˆage moyen des ´equipes qui ont gagn´e une m´edaille d’or
+Créer une vue donnant le classement des pays selon leur nombre de médailles (pays, nbOr, nbArgent, nbBronze)
 
-WITH Age AS (SELECT 
+*/
 
+CREATE VIEW IF NOT EXISTS ClassementPays AS
+WITH nbMedailleOrEq AS (
+    SELECT S1.pays, COUNT(DISTINCT numOrEq) AS nbOrEq
+    FROM Resultat
+    JOIN Enroler E1 ON (E1.numEq = numOrEq)
+    JOIN LesSportifs S1 ON (S1.numSp = E1.numSp)
+    GROUP BY S1.pays
+),
+nbMedailleArEq AS (
+    SELECT S1.pays AS pays, COUNT(DISTINCT numArgentEq) AS nbArEq
+    FROM Resultat
+    JOIN Enroler E1 ON (E1.numEq = numArgentEq)
+    JOIN LesSportifs S1 ON (S1.numSp = E1.numSp)
+    GROUP BY S1.pays
+),
+nbMedailleBrEq AS(
+    SELECT S1.pays AS pays, COUNT(DISTINCT numBronzeEq) AS nbBrEq
+    FROM Resultat
+    JOIN Enroler E1 ON (E1.numEq = numBronzeEq)
+    JOIN LesSportifs S1 ON (S1.numSp = E1.numSp)
+    GROUP BY S1.pays
+),
+nbMedailleOrSp AS (
+    SELECT S1.pays AS pays, COUNT(numOrSp) AS nbOrSp
+    FROM Resultat
+    JOIN LesSportifs S1 ON (S1.numSp = numOrSp)
+    GROUP BY S1.pays
+),
+nbMedailleArSp AS (
+    SELECT S1.pays AS pays, COUNT(numArgentSp) AS nbArSp
+    FROM Resultat
+    JOIN LesSportifs S1 ON (S1.numSp = numArgentSp)
+    GROUP BY S1.pays
+),
+nbMedailleBrSp AS (
+    SELECT S1.pays AS pays, COUNT(numBronzeSp) AS nbBrSp
+    FROM Resultat
+    JOIN LesSportifs S1 ON (S1.numSp = numBronzeSp)
+    GROUP BY S1.pays
 )
-SELECT numOrEq, MOY(age)
-FROM Resultat R
-JOIN LesSportifs S ON (R.numOrEq = S.numEq)
+SELECT pays, IFNULL(nbOrEq, 0) + IFNULL(nbOrSp, 0) AS nbOr, IFNULL(nbArEq, 0) + IFNULL(nbArSp, 0) AS nbArgent, IFNULL(nbBrEq, 0) + IFNULL(nbBrSp, 0) AS nbBronze
+FROM Pays
+LEFT JOIN nbMedailleOrEq USING(pays)
+LEFT JOIN nbMedailleArEq USING(pays)
+LEFT JOIN nbMedailleBrEq USING(pays)
+LEFT JOIN nbMedailleOrSp USING(pays)
+LEFT JOIN nbMedailleArSp USING(pays)
+LEFT JOIN nbMedailleBrSp USING(pays)
+ORDER BY nbOr DESC, nbArgent DESC, nbBronze DESC;
 
 
-*/
+
+
+--CREATE TRIGGER  
+
+
+

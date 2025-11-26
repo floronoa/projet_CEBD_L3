@@ -8,7 +8,7 @@ from sqlite3 import IntegrityError
 def read_excel_file_V0(data: sqlite3.Connection, file):
 
     # Pays
-
+    print("pays")
     # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
     # pour construire uniformement la requête
     df_sportifs = pandas.read_excel(
@@ -27,7 +27,7 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
             print(err)
 
     # Discipline
-
+    print("discipline")
     # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
     # pour construire uniformement la requête
     df_epreuves = pandas.read_excel(
@@ -46,7 +46,7 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
             print(err)
 
     # LesSportifs
-
+    print("sportifs")
     # Lecture de l'onglet du fichier excel LesEpreuves, en interprétant toutes les colonnes comme des strings
     # pour construire uniformement la requête
     df_sportifs = pandas.read_excel(
@@ -56,7 +56,7 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
     cursor = data.cursor()
     for ix, row in df_sportifs.iterrows():
         try:
-            query = "insert or ignore into LesSportifs values ('{}','{}','{}','{}','{}','{}')".format(
+            query = "insert or ignore into LesSportifs values ({},'{}','{}','{}','{}','{}')".format(
                 row['numSp'], row['nomSp'], row['prenomSp'], row['pays'], row['categorieSp'], row['dateNaisSp'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
@@ -65,7 +65,7 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
             print(err)
 
     # LesEpreuves
-
+    print("epreuve")
     # Lecture de l'onglet LesEpreuves du fichier excel, en interprétant toutes les colonnes comme des string
     # pour construire uniformement la requête
     df_epreuves = pandas.read_excel(file, sheet_name='LesEpreuves', dtype=str)
@@ -74,21 +74,58 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
     cursor = data.cursor()
     for ix, row in df_epreuves.iterrows():
         try:
-            query = "insert or ignore into LesEpreuves values ('{}','{}','{}','{}','{}','{}',".format(
-                row['numEp'], row['nomEp'], row['formeEp'], row['nomDi'], row['categorieEp'], row['nbSportifsEp'])
 
             if row['dateEp'] != 'null':
-                query = query + "'{}')".format(row['dateEp'])
+                query = "insert or ignore into LesEpreuves values ({},'{}','{}','{}','{}',{},'{}')".format(
+                    row['numEp'], row['nomEp'], row['formeEp'], row['nomDi'], row['categorieEp'], row['nbSportifsEp'], row['dateEp'])
             else:
-                query = query + "null)"
+                query = "insert or ignore into LesEpreuves values ({},'{}','{}','{}','{}',{},NULL)".format(
+                    row['numEp'], row['nomEp'], row['formeEp'], row['nomDi'], row['categorieEp'], row['nbSportifsEp'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
             cursor.execute(query)
         except IntegrityError as err:
             print(f"{err} : \n{row}")
 
-    # Participe
+    # Equipe
+    print("equipe")
+    # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
+    # pour construire uniformement la requête
+    df_sportifs = pandas.read_excel(
+        file, sheet_name='LesSportifsEQ', dtype=str)
+    df_sportifs = df_sportifs.where(pandas.notnull(df_sportifs), 'null')
+    cursor = data.cursor()
+    for ix, row in df_sportifs.iterrows():
+        try:
+            query = "insert or ignore into Equipe values ({})".format(
+                row['numEq'])
+            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+            # print(query)
+            cursor.execute(query)
+        except IntegrityError as err:
+            print(err)
 
+    # Enroler
+    print("enroler")
+    # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
+    # pour construire uniformement la requête
+    df_sportifs = pandas.read_excel(
+        file, sheet_name='LesSportifsEQ', dtype=str)
+    df_sportifs = df_sportifs.where(pandas.notnull(df_sportifs), 'null')
+
+    cursor = data.cursor()
+    for ix, row in df_sportifs.iterrows():
+        try:
+            query = "insert or ignore into Enroler values ({},{})".format(
+                row['numSp'], row['numEq'])
+            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+            # print(query)
+            cursor.execute(query)
+        except IntegrityError as err:
+            print(err)
+
+    # Participe
+    print("participe")
     # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
     # pour construire uniformement la requête
     df_inscriptions = pandas.read_excel(
@@ -99,48 +136,27 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
     cursor = data.cursor()
     for ix, row in df_inscriptions.iterrows():
         try:
-            query = "insert or ignore into Participe values ('{}','{}')".format(
-                row['numIn'], row['numEp'])
+            if int(row['numIn']) < 1000:
+                cursor.execute("""
+                SELECT numSp
+                FROM Enroler
+                WHERE numEq = ?;
+                """, row['numIn'])
+                tab_inscri = {str(i[0]).strip() for i in cursor.fetchall()}
+                print(tab_inscri)
+                for i in tab_inscri:
+                    cursor.execute("insert or ignore into Participe values ({},{})".format(
+                        int(i), row['numEp']))
+                print("if")
+            else:
+                print("else1")
+                query = "insert or ignore into Participe values ({},{})".format(
+                    row['numIn'], row['numEp'])
+                print("else2")
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
-            cursor.execute(query)
-        except IntegrityError as err:
-            print(err)
-
-    # Equipe
-
-    # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
-    # pour construire uniformement la requête
-    df_sportifs = pandas.read_excel(
-        file, sheet_name='LesSportifsEQ', dtype=str)
-    df_sportifs = df_sportifs.where(pandas.notnull(df_sportifs), 'null')
-    cursor = data.cursor()
-    for ix, row in df_sportifs.iterrows():
-        try:
-            query = "insert or ignore into Equipe values ('{}')".format(
-                row['numEq'])
-            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            # print(query)
-            cursor.execute(query)
-        except IntegrityError as err:
-            print(err)
-
-    # Enroler
-
-    # Lecture de l'onglet du fichier excel LesSportifsEQ, en interprétant toutes les colonnes comme des strings
-    # pour construire uniformement la requête
-    df_sportifs = pandas.read_excel(
-        file, sheet_name='LesSportifsEQ', dtype=str)
-    df_sportifs = df_sportifs.where(pandas.notnull(df_sportifs), 'null')
-
-    cursor = data.cursor()
-    for ix, row in df_sportifs.iterrows():
-        try:
-            query = "insert or ignore into Enroler values ('{}','{}')".format(
-                row['numSp'], row['numEq'])
-            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            # print(query)
-            cursor.execute(query)
+                cursor.execute(query)
+                print("else3")
         except IntegrityError as err:
             print(err)
 
@@ -156,28 +172,21 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
     FROM LesEpreuves
     WHERE formeEp = 'individuelle';
     """)
-    # Construire un ensemble de chaînes normalisées pour comparaison fiable avec pandas
+
     tab_solo = {str(i[0]).strip() for i in cursor.fetchall()}
-    print(tab_solo)
     # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-    # print(query)
-    print(tab_solo)
 
     for ix, row in df_resultats.iterrows():
         try:
 
             if row['numEp'] in tab_solo:
-                print("try")
-                query = "insert or ignore into Resultat values ('{}','{}','{}','{}','{}','{}','{}')".format(
-                    row['numEp'], row['gold'], row['silver'], row['bronze'], None, None, None)
+                query = "insert or ignore into Resultat values ('{}','{}','{}','{}',NULL,NULL,NULL)".format(
+                    row['numEp'], row['gold'], row['silver'], row['bronze'])
                 # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-                # print(query)
-                cursor.execute(query)
             else:
-                query = "insert or ignore into Resultat values ('{}','{}','{}','{}','{}','{}','{}')".format(
-                    row['numEp'],  None, None, None, row['gold'], row['silver'], row['bronze'])
+                query = "insert or ignore into Resultat values ('{}',NULL,NULL,NULL,'{}','{}','{}')".format(
+                    row['numEp'], row['gold'], row['silver'], row['bronze'])
                 # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-                # print(query)
-                cursor.execute(query)
+            cursor.execute(query)
         except IntegrityError as err:
             print(err)
