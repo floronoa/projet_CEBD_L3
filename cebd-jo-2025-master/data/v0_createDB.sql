@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS LesEpreuves
   CONSTRAINT EP_CK1 CHECK (formeEp IN ('individuelle','par equipe','par couple')),
   CONSTRAINT EP_CK2 CHECK (categorieEp IN ('feminin','masculin','mixte')),
   CONSTRAINT EP_CK3 CHECK (numEp > 0),
-  CONSTRAINT EP_CK4 CHECK (nbSportifsEp > 2)
+  CONSTRAINT EP_CK4 CHECK (nbSportifsEp > 1)
 );
 
 CREATE TABLE IF NOT EXISTS Participe 

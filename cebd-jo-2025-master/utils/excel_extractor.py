@@ -76,10 +76,10 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
         try:
 
             if row['dateEp'] != 'null':
-                query = "insert or ignore into LesEpreuves values ({},'{}','{}','{}','{}',{},'{}')".format(
+                query = "insert into LesEpreuves values ({},'{}','{}','{}','{}',{},'{}')".format(
                     row['numEp'], row['nomEp'], row['formeEp'], row['nomDi'], row['categorieEp'], row['nbSportifsEp'], row['dateEp'])
             else:
-                query = "insert or ignore into LesEpreuves values ({},'{}','{}','{}','{}',{},NULL)".format(
+                query = "insert into LesEpreuves values ({},'{}','{}','{}','{}',{},NULL)".format(
                     row['numEp'], row['nomEp'], row['formeEp'], row['nomDi'], row['categorieEp'], row['nbSportifsEp'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
@@ -141,22 +141,22 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
                 SELECT numSp
                 FROM Enroler
                 WHERE numEq = ?;
-                """, row['numIn'])
+                """, [row['numIn']])
                 tab_inscri = {str(i[0]).strip() for i in cursor.fetchall()}
-                print(tab_inscri)
+                # print(tab_inscri)
                 for i in tab_inscri:
                     cursor.execute("insert or ignore into Participe values ({},{})".format(
                         int(i), row['numEp']))
-                print("if")
+                # print("if")
             else:
-                print("else1")
+                # print("else1")
                 query = "insert or ignore into Participe values ({},{})".format(
                     row['numIn'], row['numEp'])
-                print("else2")
+                # print("else2")
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
                 cursor.execute(query)
-                print("else3")
+                # print("else3")
         except IntegrityError as err:
             print(err)
 
