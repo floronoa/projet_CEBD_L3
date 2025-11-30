@@ -97,8 +97,11 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
     cursor = data.cursor()
     for ix, row in df_sportifs.iterrows():
         try:
-            query = "insert or ignore into Equipe values ({})".format(
-                row['numEq'])
+            if row['numEq'] == 'null':
+                pass
+            else:
+                query = "insert or ignore into Equipe values ({})".format(
+                    row['numEq'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
             cursor.execute(query)
@@ -190,3 +193,8 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
             cursor.execute(query)
         except IntegrityError as err:
             print(err)
+
+    cursor.execute("""INSERT INTO Participe VALUES(1016, 3)""")
+    cursor.execute("""INSERT INTO Participe VALUES(1017, 4)""")
+    cursor.execute("""INSERT INTO Participe VALUES(1016, 1)""")
+    cursor.execute("""INSERT INTO Participe VALUES(1017, 2)""")

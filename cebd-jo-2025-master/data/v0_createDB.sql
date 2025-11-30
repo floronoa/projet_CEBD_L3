@@ -196,7 +196,20 @@ ORDER BY nbOr DESC, nbArgent DESC, nbBronze DESC;
 
 
 
---CREATE TRIGGER  
+--CREATE TRIGGER
+DROP TRIGGER IF EXISTS chevauchement_ep;
+CREATE TRIGGER chevauchement_ep
+BEFORE INSERT ON Participe
+WHEN EXISTS
+   (SELECT *
+   FROM LesEpreuves C
+   JOIN Participe P USING (numEp)
+   JOIN LesSportifs USING (numSp)
+   WHERE C.dateEp > NEW.dateEp AND C.dateEp < NEW.dateEp AND C.numSp = NEW.numSp)
+BEGIN
+   SELECT RAISE (ABORT, '! chevauchement sportif epreuve');
+END;
+
 
 
 
