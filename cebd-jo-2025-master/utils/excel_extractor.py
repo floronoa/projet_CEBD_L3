@@ -104,7 +104,7 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
                     row['numEq'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
-            cursor.execute(query)
+                cursor.execute(query)
         except IntegrityError as err:
             print(err)
 
@@ -119,11 +119,14 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
     cursor = data.cursor()
     for ix, row in df_sportifs.iterrows():
         try:
-            query = "insert or ignore into Enroler values ({},{})".format(
-                row['numSp'], row['numEq'])
+            if row['numEq'] == 'null':
+                pass
+            else:
+                query = "insert or ignore into Enroler values ({},{})".format(
+                    row['numSp'], row['numEq'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             # print(query)
-            cursor.execute(query)
+                cursor.execute(query)
         except IntegrityError as err:
             print(err)
 
@@ -194,7 +197,44 @@ def read_excel_file_V0(data: sqlite3.Connection, file):
         except IntegrityError as err:
             print(err)
 
+    # test trigger categorie_ep_sp
     cursor.execute("""INSERT INTO Participe VALUES(1016, 3)""")
     cursor.execute("""INSERT INTO Participe VALUES(1017, 4)""")
     cursor.execute("""INSERT INTO Participe VALUES(1016, 1)""")
     cursor.execute("""INSERT INTO Participe VALUES(1017, 2)""")
+
+    cursor.execute("SELECT * FROM Participe WHERE numSp = 1016")
+    rows = cursor.fetchall()
+    print("Participe numSp=1016:")
+    for i in rows:
+        print(i)
+
+    cursor.execute("SELECT * FROM Participe WHERE numSp = 1017")
+    rows = cursor.fetchall()
+    print("Participe numSp=1017:")
+    for i in rows:
+        print(i)
+
+    # test trigger pays_eq
+    cursor.execute("""INSERT INTO Enroler VALUES(1003, 30)""")
+    cursor.execute("SELECT * FROM Enroler WHERE numSp = 1003")
+    rows = cursor.fetchall()
+    print("Enroler numSp=1003:")
+    for i in rows:
+        print(i)
+
+    # test trigger date_sp_ep
+    cursor.execute(
+        """INSERT INTO LesSportifs VALUES(1500, 'Jean','Patrick','France','masculin','2026-01-01')""")
+    cursor.execute("SELECT * FROM LesSportifs WHERE numSp = 1500")
+    rows = cursor.fetchall()
+    print("Sportif numSp=1500:")
+    for i in rows:
+        print(i)
+
+    cursor.execute("""INSERT INTO Participe VALUES(1500, 1)""")
+    cursor.execute("SELECT * FROM Participe WHERE numSp = 1500")
+    rows = cursor.fetchall()
+    print("Participe numSp=1500:")
+    for i in rows:
+        print(i)

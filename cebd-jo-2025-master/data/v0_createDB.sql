@@ -1,17 +1,17 @@
-PRAGMA foreign_keys = ON ;
+PRAGMA foreign_keys = ON /
 
 
 CREATE TABLE IF NOT EXISTS Discipline 
 (
   nomDi VARCHAR2(25),
   CONSTRAINT Di_PK PRIMARY KEY (nomDi)
-);
+)/
 
 CREATE TABLE IF NOT EXISTS Pays 
 (
   pays VARCHAR2(20),
   CONSTRAINT Pa_PK PRIMARY KEY (pays)
-);
+)/
 
 CREATE TABLE IF NOT EXISTS LesSportifs 
 (
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS LesSportifs
   CONSTRAINT SP_CK2 CHECK(numSp < 1501),
   CONSTRAINT SP_CK3 CHECK(categorieSp IN ('feminin','masculin'))
   
-);
+)/
 
 CREATE TABLE IF NOT EXISTS LesEpreuves 
 (
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS LesEpreuves
   CONSTRAINT EP_CK2 CHECK (categorieEp IN ('feminin','masculin','mixte')),
   CONSTRAINT EP_CK3 CHECK (numEp > 0),
   CONSTRAINT EP_CK4 CHECK (nbSportifsEp > 1)
-);
+)/
 
 CREATE TABLE IF NOT EXISTS Participe 
 (
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS Participe
   CONSTRAINT Pa_PK PRIMARY KEY (numSp,numEp),
   CONSTRAINT PA_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp),
   CONSTRAINT PA_FK_Ep FOREIGN KEY (numEp) REFERENCES LesEpreuves(numEp)
-);
+)/
 
 CREATE TABLE IF NOT EXISTS Equipe 
 (
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS Equipe
   CONSTRAINT Eq_PK PRIMARY KEY (numEq),
   CONSTRAINT Eq_CK1 CHECK (numEq > 0),
   CONSTRAINT Eq_CK2 CHECK (numEq < 101)
-);
+)/
 
 CREATE TABLE IF NOT EXISTS Enroler 
 ( 
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS Enroler
   CONSTRAINT En_PK PRIMARY KEY (numSp,numEq),
   CONSTRAINT En_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp),
   CONSTRAINT En_FK_Eq FOREIGN KEY (numEq) REFERENCES Equipe(numEq)
-);
+)/
 
 CREATE TABLE IF NOT EXISTS Resultat 
 (
@@ -88,60 +88,60 @@ CREATE TABLE IF NOT EXISTS Resultat
   CONSTRAINT Re_FK_OrEq FOREIGN KEY (numOrEq) REFERENCES Equipe(numEq),
   CONSTRAINT Re_FK_ArEq FOREIGN KEY (numArgentEq) REFERENCES Equipe(numEq),
   CONSTRAINT Re_FK_BrEq FOREIGN KEY (numBronzeEq) REFERENCES Equipe(numEq)
-);
+)/
 
 
 
-/*
 
-Créer une vue LesAgesSportifs (numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ageSp)
 
-*/
+--Créer une vue LesAgesSportifs (numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ageSp)
+
+
 
 
 CREATE VIEW IF NOT EXISTS LesAgesSportifs AS
 SELECT numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ((strftime('%Y', 'now') - strftime('%Y', dateNaisSp)) - (strftime('%m-%d', 'now') < strftime('%m-%d', dateNaisSp))) AS ageSp
-FROM LesSportifs ;
+FROM LesSportifs /
 
 
 
 
 
-/*
- Créer une vue LesNbsEquipiers(numEq, nbEquipiersEq)
 
-*/
+-- Créer une vue LesNbsEquipiers(numEq, nbEquipiersEq)
+
+
 
 
 CREATE VIEW IF NOT EXISTS LesNbsEquipiers AS
 SELECT numEq, COUNT(numSp) AS nbEquipiersEq
 FROM LesSportifs
 JOIN Enroler USING(numSp)
-GROUP BY numEq;
+GROUP BY numEq/
 
 
 
 
 
-/*
 
-Créer une vue calculant l’age moyen des équipes qui ont gagné une médaille d’or
 
-*/
+--Créer une vue calculant l’age moyen des équipes qui ont gagné une médaille d’or
+
+
 
 CREATE VIEW IF NOT EXISTS AgeMoyEqOr AS
 SELECT numOrEq, AVG(((strftime('%Y', 'now') - strftime('%Y', dateNaisSp)) - (strftime('%m-%d', 'now') < strftime('%m-%d', dateNaisSp)))) AS moyAge
 FROM Resultat 
 JOIN Enroler ON (numEq = numOrEq)
 JOIN LesSportifs  USING (numSp)
-GROUP BY numOrEq;
+GROUP BY numOrEq/
 
 
-/*
 
-Créer une vue donnant le classement des pays selon leur nombre de médailles (pays, nbOr, nbArgent, nbBronze)
 
-*/
+--Créer une vue donnant le classement des pays selon leur nombre de médailles (pays, nbOr, nbArgent, nbBronze)
+
+
 
 CREATE VIEW IF NOT EXISTS ClassementPays AS
 WITH nbMedailleOrEq AS (
@@ -191,25 +191,69 @@ LEFT JOIN nbMedailleBrEq USING(pays)
 LEFT JOIN nbMedailleOrSp USING(pays)
 LEFT JOIN nbMedailleArSp USING(pays)
 LEFT JOIN nbMedailleBrSp USING(pays)
-ORDER BY nbOr DESC, nbArgent DESC, nbBronze DESC;
+ORDER BY nbOr DESC, nbArgent DESC, nbBronze DESC/
 
 
 
 
 --CREATE TRIGGER
-DROP TRIGGER IF EXISTS chevauchement_ep;
-CREATE TRIGGER chevauchement_ep
-BEFORE INSERT ON Participe
-WHEN EXISTS
-   (SELECT *
-   FROM LesEpreuves C
-   JOIN Participe P USING (numEp)
-   JOIN LesSportifs USING (numSp)
-   WHERE C.dateEp > NEW.dateEp AND C.dateEp < NEW.dateEp AND C.numSp = NEW.numSp)
+
+
+-- Verifie si les membre d'une equipe vienne du meme pays
+
+CREATE TRIGGER IF NOT EXISTS Pays_Eq
+BEFORE INSERT ON Enroler
+FOR EACH ROW
+WHEN EXISTS (
+  SELECT 1
+  FROM Enroler E
+  JOIN LesSportifs S ON E.numSp = S.numSp
+  WHERE E.numEq = NEW.numEq
+    AND S.pays != (SELECT pays 
+      FROM LesSportifs 
+      WHERE numSp = NEW.numSp)
+)
 BEGIN
-   SELECT RAISE (ABORT, '! chevauchement sportif epreuve');
-END;
+  SELECT RAISE(IGNORE);
+END/
 
 
+-- Verifie si un sportif s'inscrit dans la bonne categorie
+
+
+CREATE TRIGGER IF NOT EXISTS Categorie_Ep_Sp
+BEFORE INSERT ON Participe
+FOR EACH ROW
+WHEN EXISTS (
+  SELECT 1
+  FROM LesEpreuves E
+  WHERE E.numEp = NEW.numEp
+    AND E.categorieEp != 'mixte'
+    AND E.categorieEp != (SELECT categorieSp 
+      FROM LesSportifs 
+      WHERE numSp = NEW.numSp)
+)
+BEGIN
+  SELECT RAISE(IGNORE);
+END/
+
+
+-- Verifie si dateNaisSp > dateEp
+
+
+CREATE TRIGGER IF NOT EXISTS Date_Sp_Ep
+BEFORE INSERT ON Participe
+FOR EACH ROW
+WHEN EXISTS (
+  SELECT 1
+  FROM LesEpreuves E
+  WHERE E.numEp = NEW.numEp
+    AND E.dateEp < (SELECT dateNaisSp 
+      FROM LesSportifs 
+      WHERE numSp = NEW.numSp)
+)
+BEGIN
+  SELECT RAISE(IGNORE);
+END/
 
 
