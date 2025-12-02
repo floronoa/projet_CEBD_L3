@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS Discipline
 CREATE TABLE IF NOT EXISTS Pays 
 (
   pays VARCHAR2(20),
-  CONSTRAINT Pa_PK PRIMARY KEY (pays)
+  CONSTRAINT Pa_PK PRIMARY KEY (pays) 
 )/
 
 CREATE TABLE IF NOT EXISTS LesSportifs 
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS LesSportifs
   categorieSp VARCHAR2(10),
   dateNaisSp DATE,
   CONSTRAINT SP_PK PRIMARY KEY (numSp),
-  CONSTRAINT SP_FK_pa FOREIGN KEY (pays) REFERENCES Pays(pays),
+  CONSTRAINT SP_FK_pa FOREIGN KEY (pays) REFERENCES Pays(pays) ON DELETE CASCADE,
   CONSTRAINT SP_CK1 CHECK(numSp > 999),
   CONSTRAINT SP_CK2 CHECK(numSp < 1501),
   CONSTRAINT SP_CK3 CHECK(categorieSp IN ('feminin','masculin'))
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS LesEpreuves
   nbSportifsEp NUMBER(2),
   dateEp DATE,
   CONSTRAINT EP_PK PRIMARY KEY (numEp),
-  CONSTRAINT EP_FK_nd FOREIGN KEY (nomDi) REFERENCES Discipline(nomDi),
+  CONSTRAINT EP_FK_nd FOREIGN KEY (nomDi) REFERENCES Discipline(nomDi) ON DELETE CASCADE,
   CONSTRAINT EP_CK1 CHECK (formeEp IN ('individuelle','par equipe','par couple')),
   CONSTRAINT EP_CK2 CHECK (categorieEp IN ('feminin','masculin','mixte')),
   CONSTRAINT EP_CK3 CHECK (numEp > 0),
@@ -51,16 +51,16 @@ CREATE TABLE IF NOT EXISTS Participe
   numSp NUMBER(4),
   numEp NUMBER(3),
   CONSTRAINT Pa_PK PRIMARY KEY (numSp,numEp),
-  CONSTRAINT PA_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp),
-  CONSTRAINT PA_FK_Ep FOREIGN KEY (numEp) REFERENCES LesEpreuves(numEp)
+  CONSTRAINT PA_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp) ON DELETE CASCADE,
+  CONSTRAINT PA_FK_Ep FOREIGN KEY (numEp) REFERENCES LesEpreuves(numEp) ON DELETE CASCADE
 )/
 
 CREATE TABLE IF NOT EXISTS Equipe 
 (
   numEq NUMBER(4),
   CONSTRAINT Eq_PK PRIMARY KEY (numEq),
-  CONSTRAINT Eq_CK1 CHECK (numEq > 0),
-  CONSTRAINT Eq_CK2 CHECK (numEq < 101)
+  CONSTRAINT Eq_CK1 CHECK (numEq > 0) ,
+  CONSTRAINT Eq_CK2 CHECK (numEq < 101) 
 )/
 
 CREATE TABLE IF NOT EXISTS Enroler 
@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS Enroler
   numSp NUMBER(4),
   numEq NUMBER(3),
   CONSTRAINT En_PK PRIMARY KEY (numSp,numEq),
-  CONSTRAINT En_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp),
-  CONSTRAINT En_FK_Eq FOREIGN KEY (numEq) REFERENCES Equipe(numEq)
+  CONSTRAINT En_FK_Sp FOREIGN KEY (numSp) REFERENCES LesSportifs(numSp) ON DELETE CASCADE,
+  CONSTRAINT En_FK_Eq FOREIGN KEY (numEq) REFERENCES Equipe(numEq) ON DELETE CASCADE
 )/
 
 CREATE TABLE IF NOT EXISTS Resultat 
@@ -81,13 +81,14 @@ CREATE TABLE IF NOT EXISTS Resultat
   numOrEq NUMBER(3),
   numArgentEq NUMBER(3),
   numBronzeEq NUMBER(3),
-  CONSTRAINT Re_PK PRIMARY KEY (numEp),
-  CONSTRAINT Re_FK_OrSp FOREIGN KEY (numOrSp) REFERENCES LesSportifs(numSp),
-  CONSTRAINT Re_FK_ArSp FOREIGN KEY (numArgentSp) REFERENCES LesSportifs(numSp),
-  CONSTRAINT Re_FK_BrSp FOREIGN KEY (numBronzeSp) REFERENCES LesSportifs(numSp),
-  CONSTRAINT Re_FK_OrEq FOREIGN KEY (numOrEq) REFERENCES Equipe(numEq),
-  CONSTRAINT Re_FK_ArEq FOREIGN KEY (numArgentEq) REFERENCES Equipe(numEq),
-  CONSTRAINT Re_FK_BrEq FOREIGN KEY (numBronzeEq) REFERENCES Equipe(numEq)
+  CONSTRAINT Re_PK PRIMARY KEY (numEp) ,
+  CONSTRAINT Re_FK_Ep FOREIGN KEY (numEp) REFERENCES LesEpreuves(numEp) ON DELETE CASCADE,
+  CONSTRAINT Re_FK_OrSp FOREIGN KEY (numOrSp) REFERENCES LesSportifs(numSp) ON DELETE CASCADE,
+  CONSTRAINT Re_FK_ArSp FOREIGN KEY (numArgentSp) REFERENCES LesSportifs(numSp) ON DELETE CASCADE,
+  CONSTRAINT Re_FK_BrSp FOREIGN KEY (numBronzeSp) REFERENCES LesSportifs(numSp) ON DELETE CASCADE,
+  CONSTRAINT Re_FK_OrEq FOREIGN KEY (numOrEq) REFERENCES Equipe(numEq) ON DELETE CASCADE,
+  CONSTRAINT Re_FK_ArEq FOREIGN KEY (numArgentEq) REFERENCES Equipe(numEq) ON DELETE CASCADE,
+  CONSTRAINT Re_FK_BrEq FOREIGN KEY (numBronzeEq) REFERENCES Equipe(numEq) ON DELETE CASCADE
 )/
 
 
@@ -196,64 +197,6 @@ ORDER BY nbOr DESC, nbArgent DESC, nbBronze DESC/
 
 
 
---CREATE TRIGGER
 
-
--- Verifie si les membre d'une equipe vienne du meme pays
-
-CREATE TRIGGER IF NOT EXISTS Pays_Eq
-BEFORE INSERT ON Enroler
-FOR EACH ROW
-WHEN EXISTS (
-  SELECT 1
-  FROM Enroler E
-  JOIN LesSportifs S ON E.numSp = S.numSp
-  WHERE E.numEq = NEW.numEq
-    AND S.pays != (SELECT pays 
-      FROM LesSportifs 
-      WHERE numSp = NEW.numSp)
-)
-BEGIN
-  SELECT RAISE(IGNORE);
-END/
-
-
--- Verifie si un sportif s'inscrit dans la bonne categorie
-
-
-CREATE TRIGGER IF NOT EXISTS Categorie_Ep_Sp
-BEFORE INSERT ON Participe
-FOR EACH ROW
-WHEN EXISTS (
-  SELECT 1
-  FROM LesEpreuves E
-  WHERE E.numEp = NEW.numEp
-    AND E.categorieEp != 'mixte'
-    AND E.categorieEp != (SELECT categorieSp 
-      FROM LesSportifs 
-      WHERE numSp = NEW.numSp)
-)
-BEGIN
-  SELECT RAISE(IGNORE);
-END/
-
-
--- Verifie si dateNaisSp > dateEp
-
-
-CREATE TRIGGER IF NOT EXISTS Date_Sp_Ep
-BEFORE INSERT ON Participe
-FOR EACH ROW
-WHEN EXISTS (
-  SELECT 1
-  FROM LesEpreuves E
-  WHERE E.numEp = NEW.numEp
-    AND E.dateEp < (SELECT dateNaisSp 
-      FROM LesSportifs 
-      WHERE numSp = NEW.numSp)
-)
-BEGIN
-  SELECT RAISE(IGNORE);
-END/
 
 

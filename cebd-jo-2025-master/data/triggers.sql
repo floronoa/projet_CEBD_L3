@@ -58,6 +58,7 @@ WHEN EXISTS (
 BEGIN
   SELECT RAISE(ABORT, "Le sportif ne peut pas participer à une épreuve avant sa naissance");
 END/
+
 -- Verifie si le nombre de personne dans une equipe est superieur à deux
 
 CREATE TRIGGER IF NOT EXISTS  NbSportifEquipe
@@ -70,7 +71,7 @@ WHEN EXISTS (
   HAVING COUNT(numSp) < 2 AND OLD.numEq = numEq 
   )
 BEGIN
-  SELECT RAISE (ABORT , "ntm joe");
+  DELETE FROM Equipe WHERE numEq = OLD.numEq;
 END/
 
 -- Verifie si le nombre d'inscrit dans une epreuve permet d'avoir resultat
