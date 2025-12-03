@@ -159,7 +159,7 @@ def database_test(data):
     print("\n---------------------------------\n")
     print("Test Nb_Participant")
     print(
-        """INSERT INTO LesEpreuves VALUES(50, 'Batman', 'individuelle', 'Ski alpin', 'mixte', NULL, '2020-04-06 00:00:00')""")
+        """INSERT INTO LesEpreuves VALUES(50, 'Chute acrobatique', 'individuelle', 'Ski alpin', 'mixte', NULL, '2020-04-06 00:00:00')""")
     print("""INSERT INTO Participe VALUES(1017, 50)""")
     print("""INSERT INTO Participe VALUES(1016, 50)""")
     print(
@@ -167,7 +167,7 @@ def database_test(data):
 
     try:
         cursor.execute(
-            """INSERT INTO LesEpreuves VALUES(50, 'Batman', 'individuelle', 'Ski alpin', 'mixte', NULL, '2020-04-06 00:00:00')""")
+            """INSERT INTO LesEpreuves VALUES(50, 'Chute acrobatique', 'individuelle', 'Ski alpin', 'mixte', NULL, '2020-04-06 00:00:00')""")
         cursor.execute("""INSERT INTO Participe VALUES(1017, 50)""")
         cursor.execute("""INSERT INTO Participe VALUES(1016, 50)""")
         cursor.execute(
