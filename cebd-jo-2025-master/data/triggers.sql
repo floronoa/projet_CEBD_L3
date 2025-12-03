@@ -17,7 +17,7 @@ WHEN EXISTS (
       WHERE numSp = NEW.numSp)
 )
 BEGIN
-  SELECT RAISE(ABORT, "Les membres d'une équipe doivent venir du même pays");
+  SELECT RAISE(ABORT, "Les membres d'une même equipe être du même pays");
 END/
 
 
@@ -61,7 +61,7 @@ END/
 
 -- Verifie si le nombre de personne dans une equipe est superieur à deux
 
-CREATE TRIGGER IF NOT EXISTS  NbSportifEquipe
+CREATE TRIGGER IF NOT EXISTS  Nb_Sp_Eq
 AFTER DELETE ON Enroler
 FOR EACH ROW
 WHEN EXISTS (
@@ -76,7 +76,7 @@ END/
 
 -- Verifie si le nombre d'inscrit dans une epreuve permet d'avoir resultat
 
-CREATE TRIGGER IF NOT EXISTS  NbParticpant
+CREATE TRIGGER IF NOT EXISTS  Nb_Particpant
 BEFORE INSERT ON Resultat
 FOR EACH ROW
 WHEN EXISTS (

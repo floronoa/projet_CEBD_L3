@@ -107,9 +107,9 @@ def database_test(data):
     except IntegrityError as err:
             print("TRIGGER : date_sp_ep")
 
-    #test trigger NbPersParEquipe
+    #test trigger Nb_Sp_Eq
     print("\n---------------------------------\n")
-    print("test NbPersParEquipe")
+    print("test Nb_Sp_Eq")
     try : 
         cursor.execute("""INSERT INTO Equipe VALUES(95)""")
         cursor.execute("""INSERT INTO Enroler VALUES(1500, 95)""")
@@ -127,11 +127,11 @@ def database_test(data):
         for i in rows:
             print(i)
     except IntegrityError as err:
-            print("TRIGGER : NbPersParEquipe")
+            print("TRIGGER : Nb_Sp_Eq")
 
     #test trigger NbParticipant
     print("\n---------------------------------\n")
-    print("test NbParticipant")
+    print("test Nb_Participant")
     try : 
         cursor.execute("""INSERT INTO LesEpreuves VALUES(50, 'Batman', 'individuelle', 'Ski alpin', 'mixte', NULL, '2020-04-06 00:00:00')""")
         cursor.execute("""INSERT INTO Participe VALUES(1017, 50)""")
@@ -149,7 +149,7 @@ def database_test(data):
         for i in rows:
             print(i)
     except IntegrityError as err:
-            print("TRIGGER : NbParticipant")
+            print("TRIGGER : Nb_Participant")
 
     print("\n---------------------------------\n")
     print("teste delete on cascade")
